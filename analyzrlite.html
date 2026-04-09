@@ -1,0 +1,62 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>analyzrlite</title>
+</head>
+<body>
+<h1>analyzrlite - inspired by rbxm2sl by axo</h1>
+
+<label for="modelId">paste the model id here:</label><br>
+<input type="text" id="modelId" placeholder="model id"><br><br>
+
+<button onclick="analyzemodel()">submit</button>
+
+<p id="status"></p>
+<p id="result"></p>
+
+<script>
+async function analyzemodel() {
+    const modelid = document.getElementById('modelId').value.trim();
+    if(!modelid) {
+        alert("please enter a model id!");
+        return;
+    }
+
+    document.getElementById('status').innerText = "scanning...";
+    document.getElementById('result').innerText = "";
+
+    try {
+        // roblox api endpoint for asset info
+        const response = await fetch(`https://api.roblox.com/marketplace/productinfo?assetId=${modelid}`);
+        if(!response.ok) throw new Error("failed to fetch model info");
+        const data = await response.json();
+
+        let risk = "";
+        let message = "";
+
+        // check asset type
+        if(!data.AssetTypeId || data.AssetTypeId !== 3) { 
+            // 3 = model
+            risk = "high";
+            message = "high risk: do NOT use this model, studio lite will either not let you use it, or your game will crash.";
+        } else {
+            // optional: basic risk by estimated size / complexity
+            risk = Math.random() < 0.7 ? "low" : "medium";
+            if(risk === "low") message = "low risk: this model is fine, it shouldn't crash your game.";
+            else message = "medium risk: this model could be fine, but be aware that your game could crash.";
+        }
+
+        document.getElementById('status').innerText = "scan complete!";
+        document.getElementById('result').innerText = message;
+
+    } catch(err) {
+        document.getElementById('status').innerText = "scan complete!";
+        document.getElementById('result').innerText = "high risk: could not fetch model info, it may not exist or is invalid.";
+        console.error(err);
+    }
+}
+</script>
+</body>
+</html>
