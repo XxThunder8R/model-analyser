@@ -5,62 +5,55 @@
 <title>analyzrlite</title>
 </head>
 <body>
+
 <h1>analyzrlite - inspired by rbxm2sl by axo</h1>
 
-<label for="modelId">paste the model id here:</label><br>
+<label>paste the model id here:</label><br>
 <input type="text" id="modelId" placeholder="model id"><br><br>
 
 <button onclick="analyzemodel()">submit</button>
 
 <p id="status"></p>
-<p id="result"></p>
+<pre id="result"></pre>
 
 <script>
-function analyzemodel() {
-    const modelId = document.getElementById('modelId').value.trim();
-    if(!modelId) {
+const WORKER_URL = "https://analyzerlite.esinoneh.workers.dev";
+
+async function analyzemodel() {
+    const id = document.getElementById("modelId").value.trim();
+
+    if (!id) {
         alert("please enter a model id!");
         return;
     }
 
-    document.getElementById('status').innerText = "scanning...";
-    document.getElementById('result').innerText = "";
+    document.getElementById("status").innerText = "scanning...";
+    document.getElementById("result").innerText = "";
 
-    // simulate fetching counts
-    // in the future, you can replace this with real backend fetch
-    const parts = Math.floor(Math.random() * 10000); // random 0-9999
-    const localscripts = Math.floor(Math.random() * 20); // random 0-19
-    const modulescripts = Math.floor(Math.random() * 10); // random 0-9
-    const serverscripts = Math.floor(Math.random() * 5); // random 0-4
+    try {
+        const res = await fetch(`${WORKER_URL}/analyze?id=${id}`);
+        const data = await res.json();
 
-    // determine risk
-    let risk = "";
-    let message = "";
+        document.getElementById("status").innerText = "scan complete!";
 
-    if(parts > 8000) { // huge model
-        risk = "high";
-        message = "high risk: do NOT use this model, studio lite will either not let you use it, or your game will crash.";
-    } else if(localscripts + modulescripts + serverscripts > 20) {
-        risk = "medium";
-        message = "medium risk: this model could be fine, but be aware that your game could crash.";
-    } else {
-        risk = "low";
-        message = "low risk: this model is fine, it shouldn't crash your game.";
+        document.getElementById("result").innerText =
+`model id: ${data.id || id}
+
+parts: ${data.parts}
+localscripts: ${data.localscripts}
+modulescripts: ${data.modulescripts}
+serverscripts: ${data.serverscripts}
+
+risk: ${data.risk}
+
+${data.message}`;
+    } catch (e) {
+        document.getElementById("status").innerText = "scan failed!";
+        document.getElementById("result").innerText =
+"high risk: worker not reachable or network error.";
     }
-
-    // show results
-    const resultText = `
-model id: ${modelId}
-parts: ${parts}
-localscripts: ${localscripts}
-modulescripts: ${modulescripts}
-serverscripts: ${serverscripts}
-risk: ${risk}
-`;
-
-    document.getElementById('status').innerText = "scan complete!";
-    document.getElementById('result').innerText = resultText + "\n" + message;
 }
 </script>
+
 </body>
 </html>
